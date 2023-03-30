@@ -1,0 +1,57 @@
+general: 
+  EXP_ID: exp3
+  BASE_DIR: /notebooks/isolated-sign-language-recognition/
+  BASE_DATA_DIR: /notebooks/data
+  PREPROCESS_DATA: False
+  TRAIN_MODEL: True
+  TRAIN_VALID_FINAL: False
+  TRAIN_QAT_AWARE: False
+  SEED: 555
+  IS_INTERACTIVE: False
+  VERBOSE: 1
+  LOG_DIR: /notebooks/isolated-sign-language-recognition/logs/
+
+data: 
+  N_ROWS: 543
+  N_DIMS: 3
+  DIM_NAMES: ['x', 'y', 'z']
+  NUM_CLASSES: 250
+  INPUT_SIZE: 32
+
+train:
+  BATCH_ALL_SIGNS_N: 4
+  BATCH_SIZE: 256
+  N_EPOCHS: 2
+  EARLY_STOPPING_PATIENCE: null
+  N_EPOCHS_VALID_FIT: null
+  LR_MAX: 1.0e-3
+  N_WARMUP_EPOCHS: 0
+  WD_RATIO: 0.05
+  MASK_VAL: 4237
+  K_FOLDS: 10
+  FOLDS_TO_TRAIN: [9]
+  LOAD_MODELS: False
+  LOAD_MODELS_MAP: null
+
+model:
+  # Dense layer units for landmarks
+  LIPS_UNITS: 256
+  HANDS_UNITS: 256
+  POSE_UNITS: 256
+  # final embedding and transformer embedding size
+  UNITS: 256
+  # Transformer
+  NUM_BLOCKS: 2
+  MLP_RATIO: 2
+  LAYER_NORM_EPS: 1.0e-6
+  # Dropout
+  EMBEDDING_DROPOUT: 0.00
+  MLP_DROPOUT_RATIO: 0.10
+  CLASSIFIER_DROPOUT_RATIO: 0.49
+  # Activations
+  ACTIVATION_FN: gelu
+  # Optimizer
+  INIT_LR: 9.0e-04
+  WT_DECAY: 9.710197149034744e-05
+  CB_MONITOR: "val_loss"
+  MODEL_DIR: /notebooks/isolated-sign-language-recognition/models

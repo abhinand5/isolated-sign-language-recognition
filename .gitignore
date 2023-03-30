@@ -127,3 +127,14 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# CUSTOM
+**/wandb/*
+*.npy
+*.csv
+*.parquet
+*.h5
+models/*
+conf/secrets.yml
+notebooks/train/
+conf/train_config.yml
