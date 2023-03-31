@@ -2,7 +2,7 @@ from sklearn.model_selection import StratifiedGroupKFold
 from src.islr.utils import print_shape_dtype
 
 
-def get_fold_idx_map(df, k_folds, force_lh=True, lh_signers=None, seed=42):
+def get_fold_idx_map(df, k_folds, force_lh=True, lh_signers=[], seed=42):
     while True:
         sgkf = StratifiedGroupKFold(n_splits=k_folds, shuffle=True, random_state=seed)
         _fold_ds_idx_map = {

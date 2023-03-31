@@ -129,6 +129,7 @@ dmypy.json
 .pyre/
 
 # CUSTOM
+.vscode/
 **/wandb/*
 *.npy
 *.csv
@@ -136,5 +137,5 @@ dmypy.json
 *.h5
 models/*
 conf/secrets.yml
-notebooks/train/
+notebooks/draft/
 conf/train_config.yml

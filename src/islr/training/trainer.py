@@ -9,7 +9,9 @@ from src.islr.models.custom_transformer import get_model
 from src.islr.training.utils import get_train_batch_all_signs
 from src.islr.models.callbacks import WeightDecayCallback
 from src.islr.data_processing.feature_extraction import extra_features
+from src.islr.logging import get_logger
 
+logger = get_logger(__name__)
 
 def train_model(
     exp_id,
@@ -32,9 +34,9 @@ def train_model(
         os.makedirs(model_config["MODEL_DIR"])
 
     for fold_num, fold_idxs in fold_ds_idx_map.items():
-        print(f"Cur Fold -> {fold_num}")
+        logger.info(f"Cur Fold -> {fold_num}")
         if fold_num in train_config["FOLDS_TO_TRAIN"]:
-            print(f"================ FOLD {fold_num} - START =================")
+            logger.info(f"================ FOLD {fold_num} - START =================")
 
             X_val, y_val = X[fold_idxs["val"]], y[fold_idxs["val"]]
             X_train, y_train = X[fold_idxs["train"]], y[fold_idxs["train"]]
@@ -58,7 +60,7 @@ def train_model(
             # first_decay_steps = (
             #     X_train.shape[0] // train_config.BATCH_SIZE
             # ) * train_config.N_WARMUP_EPOCHS
-            # print(f"first_decay_steps={first_decay_steps}")
+            # logger.info(f"first_decay_steps={first_decay_steps}")
             model = get_model(data_config, model_config, data["feature_stats"])
 
             wandb.init(
@@ -78,7 +80,7 @@ def train_model(
                     ).download()
                     model.load_weights(artifact_dir)
                 else:
-                    print(f"FAILED LOADING MODEL FOR FOLD {fold_num}")
+                    logger.info(f"FAILED LOADING MODEL FOR FOLD {fold_num}")
                     break
 
             # Sanity Check
@@ -156,7 +158,7 @@ def train_model(
             )
             gc.collect()
 
-            print(f"... Logging best model artifact in WANDB ...")
+            logger.info(f"... Logging best model artifact in WANDB ...")
             artifact = wandb.Artifact(
                 f"model-gislr_{exp_id}_fold{fold_num}", type="model"
             )
@@ -168,9 +170,9 @@ def train_model(
             wandb.log_artifact(artifact)
 
             wandb.join()
-            print(f"================ FOLD {fold_num} - END =================\n\n")
+            logger.info(f"================ FOLD {fold_num} - END =================\n\n")
         else:
             gc.collect()
-            print(f"\tSkipping FOLD {fold_num}")
+            logger.info(f"\tSkipping FOLD {fold_num}")
 
     return histories

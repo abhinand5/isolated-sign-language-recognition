@@ -2,6 +2,10 @@ import numpy as np
 import pandas as pd
 from tqdm import tqdm
 
+from src.islr.logging import get_logger
+
+logger = get_logger(__name__)
+
 
 def load_csv(csv_path):
     df = pd.read_csv(csv_path)
@@ -17,7 +21,7 @@ def load_relevant_data_subset(pq_path, rows_per_frame):
 
 
 # Get the full dataset
-def get_np_data_from_df(data_config, train_df, save=True):
+def get_np_data_from_df(data_config, preprocess_layer, train_df, save=True):
     # Create arrays to save data
     X = np.zeros(
         [
@@ -37,14 +41,14 @@ def get_np_data_from_df(data_config, train_df, save=True):
         tqdm(train_df[["file_path", "sign_ord"]].values)
     ):
         if row_idx % 5000 == 0:
-            print(f"Generated {row_idx}/{data_config['N_SAMPLES']}")
+            logger.info(f"Generated {row_idx}/{data_config['N_SAMPLES']}")
 
-        data, non_empty_frame_idxs = load_parquet_data(file_path)
+        data, non_empty_frame_idxs = load_parquet_data(file_path, preprocess_layer)
         X[row_idx] = data
         y[row_idx] = sign_ord
         NON_EMPTY_FRAME_IDXS[row_idx] = non_empty_frame_idxs
         if np.isnan(data).sum() > 0:
-            print(row_idx)
+            logger.info(row_idx)
             return data
 
     if save:
@@ -58,7 +62,7 @@ def get_np_data_from_df(data_config, train_df, save=True):
 
 def load_parquet_data(file_path, preprocess_layer):
     # Load Raw Data
-    data = load_relevant_data_subset(file_path)
+    data = load_relevant_data_subset(file_path, rows_per_frame=543)
     # Process Data Using Tensorflow
     data = preprocess_layer(data)
 

@@ -5,35 +5,109 @@ import datetime
 import wandb
 
 from src.islr.config import load_config
-
-# from src.src.islr.logging import get_logger
+from src.islr.logging import get_logger
 from src.islr.train import run_training
+from src.islr.eval import run_eval_on_oof
+from src.islr.conv import run_tflite_conversion
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="ISLR CLI")
-    parser.add_argument("mode", type=str, help="Mode of operation - train or inference")
+    subparsers = parser.add_subparsers(
+        help="Mode of operation - [train, eval, inference]", dest="mode"
+    )
+
+    train_parser = subparsers.add_parser("train")
+
+    eval_parser = subparsers.add_parser("eval")
+    eval_parser.add_argument(
+        "--fold_num",
+        type=int,
+        help="The OOF fold on which to evaluate the model",
+        required=True,
+    )
+    eval_parser.add_argument(
+        "--weights_path",
+        type=str,
+        help="The weights (*.h5) of the model to load and evaluate",
+        required=True,
+    )
+
+    convert_parser = subparsers.add_parser("tflite-convert")
+    convert_parser.add_argument(
+        "--input",
+        type=str,
+        help="Path of the Keras model which has to be converted (*.h5)",
+        required=True,
+    )
+    convert_parser.add_argument(
+        "--dest_dir",
+        type=str,
+        help="Destination directory where the converted tflite model has to be saved",
+        required=False,
+    )
+    convert_parser.add_argument(
+        "--quantize",
+        type=bool,
+        help="Where or not to quantize the model as part of conversion",
+        required=False,
+        default=False,
+    )
+    convert_parser.add_argument(
+        "--quantize_method",
+        choices=["dynamic", "float16"],
+        help="Quantization method - dynamic is default",
+        required=False,
+        default="dynamic",
+    )
+
     args = parser.parse_args()
 
-    MODE = args.mode
+    secrets = load_config("./conf/secrets.yml")
 
-    if MODE == "train":
+    logger = get_logger(__name__)
+
+    if args.mode == "train":
         config_dict = load_config("./conf/train_config.yml")
-    elif MODE == "inference":
-        config_dict = load_config("./conf/inference_config.yml")
-    else:
-        raise ValueError(
-            f"Invalid value set for MODE - [{MODE}] \
-            Possible values are 'train' and 'inference' "
+        wandb.login(key=secrets["WANDB_API_KEY"])
+        run_training(config_dict)
+
+    elif args.mode == "eval":
+        wandb.init(mode="disabled")
+        config_dict = load_config("./conf/train_config.yml")
+
+        fold_num = args.fold_num
+        weights_path = args.weights_path
+
+        metrics = run_eval_on_oof(config_dict, fold_num, weights_path)
+        logger.info(f"Evaluation Result:\n{metrics}")
+
+    elif args.mode == "tflite-convert":
+        config_dict = load_config("./conf/train_config.yml")
+        source_model = args.input
+        dest_dir = args.dest_dir
+        quantize = args.quantize
+        quant_method = args.quantize_method
+
+        if dest_dir == None:
+            dest_dir = config_dict["model"]["MODEL_DIR"]
+
+        name = os.path.basename(source_model).split('.')[0]
+
+        run_tflite_conversion(
+            config_dict=config_dict,
+            weights_path=source_model,
+            name=name,
+            dest_dir=dest_dir,
+            quantize=quantize,
+            quant_method=quant_method,
         )
 
-    secrets = load_config("./conf/secrets.yml")
-    wandb.login(key=secrets["WANDB_API_KEY"])
+    elif args.mode == "inference":
+        wandb.init(mode="disabled")
+        config_dict = load_config("./conf/inference_config.yml")
 
-    # now = datetime.datetime.now()
-    # timestamp = now.strftime("%d-%m-%Y-%H-%M-%S")
-    # log_file_path = os.path.join(
-    #     config_dict["general"]["LOG_DIR"], f"applog-{timestamp}.log"
-    # )
-    # logger = get_logger(__name__, log_file_path)
-
-    run_training(config_dict)
+    else:
+        raise ValueError(
+            f"Invalid value set for MODE - [{args.mode}] \
+            Possible values are 'train' and 'inference' "
+        )
