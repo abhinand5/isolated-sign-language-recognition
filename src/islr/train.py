@@ -65,6 +65,7 @@ def run_training(config_dict):
         train_config=train_conf,
         fold_ds_idx_map=fold_ds_idx_map,
         num_classes=data_conf["NUM_CLASSES"],
+        verbose=general_conf['VERBOSE'],
     )
 
     return histories

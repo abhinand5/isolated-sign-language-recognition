@@ -43,6 +43,7 @@ model:
   # Transformer
   NUM_BLOCKS: 2
   MLP_RATIO: 2
+  ADD_LAYER_NORM: True
   LAYER_NORM_EPS: 1.0e-6
   # Dropout
   EMBEDDING_DROPOUT: 0.00
@@ -53,5 +54,6 @@ model:
   # Optimizer
   INIT_LR: 9.0e-04
   WT_DECAY: 9.710197149034744e-05
+  LABEL_SMOOTHING: False
   CB_MONITOR: "val_loss"
   MODEL_DIR: /notebooks/isolated-sign-language-recognition/models

@@ -3,8 +3,15 @@ import tensorflow_addons as tfa
 
 from src.islr.models.embedding import EmbeddingCustom
 from src.islr.data_processing.feature_extraction import extra_features
-from src.islr.models.utils import scaled_dot_product, get_activation
+from src.islr.models.utils import (
+    scaled_dot_product,
+    get_activation,
+    SparseCategoricalCrossentropyLS,
+)
 from src.islr.models.config import INIT_HE_UNIFORM, INIT_GLOROT_UNIFORM
+from src.islr.logging import get_logger
+
+logger = get_logger(__name__)
 
 
 class MultiHeadAttentionCustom(tf.keras.layers.Layer):
@@ -91,6 +98,47 @@ class TransformerCustom(tf.keras.Model):
 
         return x
 
+# Full Transformer without LayerNorm
+class TransformerCustomNoLN(tf.keras.Model):
+    def __init__(self, num_blocks, model_config):
+        super(TransformerCustomNoLN, self).__init__(name="transformer")
+        self.num_blocks = num_blocks
+        self.model_config = model_config
+        self.activation_fn = get_activation(model_config["ACTIVATION_FN"])
+
+    def build(self, input_shape):
+        self.mhas = []
+        self.mlps = []
+        # Make Transformer Blocks
+        for i in range(self.num_blocks):
+            # Multi Head Attention
+            self.mhas.append(MultiHeadAttentionCustom(self.model_config["UNITS"], 8))
+            # Multi Layer Perception
+            self.mlps.append(
+                tf.keras.Sequential(
+                    [
+                        tf.keras.layers.Dense(
+                            self.model_config["UNITS"] * self.model_config["MLP_RATIO"],
+                            activation=self.activation_fn,
+                            kernel_initializer=INIT_GLOROT_UNIFORM,
+                        ),
+                        tf.keras.layers.Dropout(self.model_config["MLP_DROPOUT_RATIO"]),
+                        tf.keras.layers.Dense(
+                            self.model_config["UNITS"],
+                            kernel_initializer=INIT_HE_UNIFORM,
+                        ),
+                    ]
+                )
+            )
+
+    def call(self, x, attention_mask):
+        # Iterate input over transformer blocks
+        for mha, mlp in zip(self.mhas, self.mlps):
+            x = x + mha(x, attention_mask)
+            x = x + mlp(x)
+
+        return x
+
 
 def get_model(data_config, model_config, feature_stats):
     # Inputs
@@ -159,7 +207,10 @@ def get_model(data_config, model_config, feature_stats):
     )
 
     # Encoder Transformer Blocks
-    x = TransformerCustom(model_config["NUM_BLOCKS"], model_config)(x, mask)
+    if model_config["ADD_LAYER_NORM"]:
+        x = TransformerCustom(model_config["NUM_BLOCKS"], model_config)(x, mask)
+    else:
+        x = TransformerCustomNoLN(model_config["NUM_BLOCKS"], model_config)(x, mask)
 
     # Pooling
     x = tf.reduce_sum(x * mask, axis=1) / tf.reduce_sum(mask, axis=1)
@@ -179,7 +230,13 @@ def get_model(data_config, model_config, feature_stats):
     )
 
     # Simple Categorical Crossentropy Loss
-    loss = tf.keras.losses.SparseCategoricalCrossentropy()
+    if model_config["LABEL_SMOOTHING"]:
+        logger.info(
+            "Choosing Label Smoothing Loss function -> SparseCategoricalCrossentropyLS"
+        )
+        loss = SparseCategoricalCrossentropyLS
+    else:
+        loss = tf.keras.losses.SparseCategoricalCrossentropy()
 
     # lr_schedule = (
     #     tf.keras.optimizers.schedules.CosineDecayRestarts(
