@@ -1,5 +1,5 @@
+import os
 import tensorflow as tf
-
 
 # based on: https://stackoverflow.com/questions/67342988/verifying-the-implementation-of-multihead-attention-in-transformer
 # replaced softmax with softmax layer to support masked softmax
@@ -29,12 +29,13 @@ def get_activation(activation_name):
     return getattr(tf.keras.activations, activation_name)
 
 
-def SparseCategoricalCrossentropyLS(y_true, y_pred, num_classes=250, smoothing=0.25):
+def SparseCategoricalCrossentropyLS(y_true, y_pred, num_classes=250, smoothing=0.50):
     # One Hot Encode Sparsely Encoded Target Sign
     y_true = tf.cast(y_true, tf.int32)
     y_true = tf.one_hot(y_true, num_classes, axis=1)
     y_true = tf.squeeze(y_true, axis=2)
     # Categorical Crossentropy with native label smoothing support
+    smoothing_ratio = float(os.environ.get('LABEL_SMOOTHING', smoothing))
     return tf.keras.losses.categorical_crossentropy(
-        y_true, y_pred, label_smoothing=smoothing
+        y_true, y_pred, label_smoothing=smoothing_ratio
     )

@@ -61,7 +61,11 @@ class TransformerCustom(tf.keras.Model):
                 )
             )
             # Multi Head Attention
-            self.mhas.append(MultiHeadAttentionCustom(self.model_config["UNITS"], 8))
+            self.mhas.append(
+                MultiHeadAttentionCustom(
+                    self.model_config["UNITS"], self.model_config["MHA_HEADS"]
+                )
+            )
             # Second Layer Normalisation
             self.ln_2s.append(
                 tf.keras.layers.LayerNormalization(
@@ -98,6 +102,7 @@ class TransformerCustom(tf.keras.Model):
 
         return x
 
+
 # Full Transformer without LayerNorm
 class TransformerCustomNoLN(tf.keras.Model):
     def __init__(self, num_blocks, model_config):
@@ -112,7 +117,11 @@ class TransformerCustomNoLN(tf.keras.Model):
         # Make Transformer Blocks
         for i in range(self.num_blocks):
             # Multi Head Attention
-            self.mhas.append(MultiHeadAttentionCustom(self.model_config["UNITS"], 8))
+            self.mhas.append(
+                MultiHeadAttentionCustom(
+                    self.model_config["UNITS"], self.model_config["MHA_HEADS"]
+                )
+            )
             # Multi Layer Perception
             self.mlps.append(
                 tf.keras.Sequential(
@@ -230,7 +239,7 @@ def get_model(data_config, model_config, feature_stats):
     )
 
     # Simple Categorical Crossentropy Loss
-    if model_config["LABEL_SMOOTHING"]:
+    if model_config["LABEL_SMOOTHING"] is not None:
         logger.info(
             "Choosing Label Smoothing Loss function -> SparseCategoricalCrossentropyLS"
         )

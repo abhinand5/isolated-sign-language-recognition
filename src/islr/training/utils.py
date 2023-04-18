@@ -1,5 +1,6 @@
 import numpy as np
-
+import tensorflow as tf
+from src.islr.models.utils import SparseCategoricalCrossentropyLS
 
 # Custom sampler to get a batch containing N times all signs
 def get_train_batch_all_signs(X, y, non_empty_frame_idxs, n_signs, data_config, n_cols):
@@ -33,3 +34,12 @@ def get_train_batch_all_signs(X, y, non_empty_frame_idxs, n_signs, data_config, 
             "frames": X_batch,
             "non_empty_frame_idxs": non_empty_frame_idxs_batch,
         }, y_batch
+
+
+def get_loss_fn(model_config):
+    if model_config["LABEL_SMOOTHING"] is not None:
+        loss_fn = SparseCategoricalCrossentropyLS
+    else:
+        loss_fn = tf.keras.losses.SparseCategoricalCrossentropy()
+    
+    return loss_fn

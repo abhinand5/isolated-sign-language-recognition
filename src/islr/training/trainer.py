@@ -1,5 +1,6 @@
 import os
 import gc
+import sys
 import tensorflow as tf
 import wandb
 from wandb.keras import WandbCallback, WandbModelCheckpoint
@@ -13,6 +14,7 @@ from src.islr.logging import get_logger
 
 logger = get_logger(__name__)
 
+
 def train_model(
     exp_id,
     data,
@@ -21,6 +23,8 @@ def train_model(
     fold_ds_idx_map,
     num_classes=250,
     verbose=1,
+    train_on_all_data=False,
+    dry_run=False,
 ):
     # X, y, NON_EMPTY_FRAME_IDXS = data.values()
     X = data["X"]
@@ -35,7 +39,7 @@ def train_model(
 
     for fold_num, fold_idxs in fold_ds_idx_map.items():
         logger.info(f"Cur Fold -> {fold_num}")
-        if fold_num in train_config["FOLDS_TO_TRAIN"]:
+        if train_on_all_data or fold_num in train_config["FOLDS_TO_TRAIN"]:
             logger.info(f"================ FOLD {fold_num} - START =================")
 
             X_val, y_val = X[fold_idxs["val"]], y[fold_idxs["val"]]
@@ -62,6 +66,13 @@ def train_model(
             # ) * train_config.N_WARMUP_EPOCHS
             # logger.info(f"first_decay_steps={first_decay_steps}")
             model = get_model(data_config, model_config, data["feature_stats"])
+
+            logger.info(f"Loaded Model!")
+            logger.info(f"Total Model Params = {model.count_params()}")
+
+            if dry_run:
+                logger.info(f"[DRY RUN] Exiting... ")
+                sys.exit(0)
 
             wandb.init(
                 entity="abhinand",
@@ -97,6 +108,15 @@ def train_model(
             #                                 save_best_only=True)
 
             # Actual Training
+
+            if not train_on_all_data:
+                validation_data = (
+                    {"frames": X_val, "non_empty_frame_idxs": NON_EMPTY_FRAME_IDXS_VAL},
+                    y_val,
+                )
+            else:
+                validation_data = None
+
             history = model.fit(
                 x=get_train_batch_all_signs(
                     X_train,
@@ -104,27 +124,28 @@ def train_model(
                     NON_EMPTY_FRAME_IDXS_TRAIN,
                     train_config["BATCH_ALL_SIGNS_N"],
                     data_config,
-                    extra_features.N_COLS
+                    extra_features.N_COLS,
                 ),
                 steps_per_epoch=len(X_train)
                 // (num_classes * train_config["BATCH_ALL_SIGNS_N"]),
                 epochs=train_config["N_EPOCHS"],
                 # Only used for validation data since training data is a generator
                 batch_size=train_config["BATCH_SIZE"],
-                validation_data=(
-                    {"frames": X_val, "non_empty_frame_idxs": NON_EMPTY_FRAME_IDXS_VAL},
-                    y_val,
-                ),
+                validation_data=validation_data,
                 callbacks=[
-                    WeightDecayCallback(wd_ratio=model_config['WT_DECAY']),
+                    WeightDecayCallback(wd_ratio=model_config["WT_DECAY"]),
                     # early_stopping_cb,
-                    WandbCallback(save_model=False, monitor="val_acc", mode="max"),
+                    WandbCallback(
+                        save_model=False,
+                        monitor=model_config["CB_MONITOR"],
+                        mode=model_config["CB_MONITOR_MODE"],
+                    ),
                     WandbModelCheckpoint(
-                        f"{model_config['MODEL_DIR']}/{exp_id}-model-fold{fold_num}-best.h5",
-                        monitor="val_acc",
+                        os.path.join(wandb.run.dir, f"{exp_id}-model-fold{fold_num}-best.h5"),
+                        monitor=model_config["CB_MONITOR"],
                         save_best_only=True,
                         save_weights_only=True,
-                        mode="max",
+                        mode=model_config["CB_MONITOR_MODE"],
                     ),
                 ],
                 verbose=verbose,
@@ -133,6 +154,7 @@ def train_model(
             histories.append(history)
             # Save
 
+            model.load_weights(f"{model_config['MODEL_DIR']}/{exp_id}-model-fold{fold_num}-best.h5")
             score = model.evaluate(
                 {"frames": X_val, "non_empty_frame_idxs": NON_EMPTY_FRAME_IDXS_VAL},
                 y_val,

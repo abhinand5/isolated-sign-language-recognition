@@ -10,19 +10,27 @@ from src.islr.logging import get_logger
 logger = get_logger(__name__)
 
 
-def run_training(config_dict):
+def run_training(config_dict, dry_run=False):
     general_conf = config_dict["general"]
     data_conf = config_dict["data"]
     train_conf = config_dict["train"]
     model_conf = config_dict["model"]
+
+    os.environ['LABEL_SMOOTHING'] = str(model_conf['LABEL_SMOOTHING'])
 
     # Load the dataframe and get fold indices
     df = load_csv(csv_path=os.path.join(general_conf["BASE_DATA_DIR"], "train.csv"))
     logger.info(f"Loaded train.csv | Length={len(df)}")
 
     logger.info("Getting fold indices map ...")
+    is_single_fold = True if train_conf["K_FOLDS"] == 1 and train_conf["TRAIN_ON_ALL_DATA"] else False
     fold_ds_idx_map = get_fold_idx_map(
-        df=df, k_folds=train_conf["K_FOLDS"], force_lh=False, seed=general_conf["SEED"]
+        df=df,
+        k_folds=train_conf["K_FOLDS"],
+        force_lh=False,
+        seed=general_conf["SEED"],
+        all_data=train_conf["TRAIN_ON_ALL_DATA"],
+        val_ratio=train_conf["VAL_RATIO"],
     )
 
     logger.info("Loading Numpy data ... ")
@@ -65,7 +73,9 @@ def run_training(config_dict):
         train_config=train_conf,
         fold_ds_idx_map=fold_ds_idx_map,
         num_classes=data_conf["NUM_CLASSES"],
-        verbose=general_conf['VERBOSE'],
+        verbose=general_conf["VERBOSE"],
+        train_on_all_data=is_single_fold,
+        dry_run=dry_run,
     )
 
     return histories

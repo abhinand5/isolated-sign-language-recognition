@@ -53,9 +53,11 @@ def get_np_data_from_df(data_config, preprocess_layer, train_df, save=True):
 
     if save:
         # Save X/y
-        np.save("X.npy", X)
-        np.save("y.npy", y)
-        np.save("NON_EMPTY_FRAME_IDXS.npy", NON_EMPTY_FRAME_IDXS)
+        np.save(f"{data_config['DATA_SAVE_DIR']}/X.npy", X)
+        np.save(f"{data_config['DATA_SAVE_DIR']}/y.npy", y)
+        np.save(f"{data_config['DATA_SAVE_DIR']}/NON_EMPTY_FRAME_IDXS.npy", NON_EMPTY_FRAME_IDXS)
+
+        logger.info('Saved npy Data ...')
 
     return X, y, NON_EMPTY_FRAME_IDXS
 

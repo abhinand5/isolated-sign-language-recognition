@@ -1,6 +1,3 @@
-# =========================
-# This is just an EXAMPLE |
-# ========================
 general: 
   EXP_ID: exp5.2
   BASE_DIR: /notebooks/isolated-sign-language-recognition/
@@ -21,7 +18,6 @@ data:
   DIM_NAMES: ['x', 'y', 'z']
   NUM_CLASSES: 250
   INPUT_SIZE: 32
-  DATA_SAVE_DIR: /notebooks/isolated-sign-language-recognition/data
 
 train:
   BATCH_ALL_SIGNS_N: 4
@@ -73,39 +69,3 @@ model:
   CB_MONITOR: val_acc
   CB_MONITOR_MODE: max
   MODEL_DIR: /notebooks/isolated-sign-language-recognition/models
-
-knowledge_distillation:
-  # Weights of the teacher model to load
-  # relative to knowledge_distillation.MODEL_DIR
-  TEACHER_WEIGHTS_PATH: exp3-model-fold3-best.h5
-  # === Distillation Hyperparams ===
-  ALPHA: 0.1
-  TEMPERATURE: 10
-  STUDENT_TRAIN_EPOCHS: 100
-  # === Model Config ===
-  # Dense layer units for landmarks
-  LIPS_UNITS: 128
-  HANDS_UNITS: 128
-  POSE_UNITS: 128
-  # final embedding and transformer embedding size
-  UNITS: 128
-  # Transformer
-  NUM_BLOCKS: 2
-  MLP_RATIO: 2
-  ADD_LAYER_NORM: True
-  LAYER_NORM_EPS: 1.0e-6
-  # Dropout
-  EMBEDDING_DROPOUT: 0.00
-  MLP_DROPOUT_RATIO: 0.40
-  CLASSIFIER_DROPOUT_RATIO: 0.30
-  # Activations
-  ACTIVATION_FN: gelu
-  # Optimizer
-  INIT_LR: 2.0e-03
-  WT_DECAY: 9.710197149034744e-05
-  LABEL_SMOOTHING: False 
-  CB_MONITOR: "val_loss"
-  MODEL_DIR: /notebooks/isolated-sign-language-recognition/models/distilled
-  MODEL_ID: exp3.2_fold3
-  TEACHER_FOLD_NUM: 3
-  K_FOLDS: 10
