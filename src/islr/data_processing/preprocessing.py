@@ -45,16 +45,16 @@ class PreprocessLayer(tf.keras.layers.Layer):
         # Number of Frames in Video
         N_FRAMES0 = tf.shape(data0)[0]
 
-        # Filter Out Frames With Empty Hand Data
-        frames_hands_nansum = tf.experimental.numpy.nanmean(
-            tf.gather(data0, extra_features.HAND_IDXS0, axis=1), axis=[1, 2]
-        )
-        non_empty_frames_idxs = tf.where(frames_hands_nansum > 0)
+        # Count non NaN Hand values in each frame
+        frames_hands_non_nan_sum = tf.math.reduce_sum(
+                tf.cast(tf.math.is_nan(tf.gather(data0, extra_features.HAND_IDXS0, axis=1)) == False, tf.int32),
+                axis=[1, 2],
+            )
+        # Get indices of frames with at least 1 non NaN Hand Measurement
+        non_empty_frames_idxs = tf.where(frames_hands_non_nan_sum > 0)
         non_empty_frames_idxs = tf.squeeze(non_empty_frames_idxs, axis=1)
+        # Gather all frame indices with at least 1 non NaN Hand Measurement
         data = tf.gather(data0, non_empty_frames_idxs, axis=0)
-
-        # Cast Indices in float32 to be compatible with Tensorflow Lite
-        non_empty_frames_idxs = tf.cast(non_empty_frames_idxs, tf.float32)
 
         # Number of Frames in Filtered Video
         N_FRAMES = tf.shape(data)[0]

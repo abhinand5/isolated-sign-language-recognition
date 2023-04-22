@@ -3,7 +3,7 @@ import tensorflow as tf
 from src.islr.models.utils import SparseCategoricalCrossentropyLS
 
 # Custom sampler to get a batch containing N times all signs
-def get_train_batch_all_signs(X, y, non_empty_frame_idxs, n_signs, data_config, n_cols):
+def get_train_batch_all_signs(X, y, non_empty_frame_idxs, n_signs, data_config, n_cols, X_aug=None, aug_prob=0.2):
     # Arrays to store batch in
     X_batch = np.zeros(
         [data_config['NUM_CLASSES'] * n_signs, data_config['INPUT_SIZE'], n_cols, data_config['N_DIMS']],
@@ -25,7 +25,13 @@ def get_train_batch_all_signs(X, y, non_empty_frame_idxs, n_signs, data_config, 
         # Fill batch arrays
         for i in range(data_config['NUM_CLASSES']):
             idxs = np.random.choice(CLASS2IDXS[i], n_signs)
-            X_batch[i * n_signs : (i + 1) * n_signs] = X[idxs]
+            
+            # Apply data augmentation if X_aug is provided and randomly select samples from X_aug with probability p
+            if X_aug is not None and np.random.rand() < aug_prob:
+                X_batch[i * n_signs : (i + 1) * n_signs] = X_aug[idxs]
+            else:
+                X_batch[i * n_signs : (i + 1) * n_signs] = X[idxs]
+            
             non_empty_frame_idxs_batch[
                 i * n_signs : (i + 1) * n_signs
             ] = non_empty_frame_idxs[idxs]

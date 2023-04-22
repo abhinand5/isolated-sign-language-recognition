@@ -29,6 +29,7 @@ def train_model(
     # X, y, NON_EMPTY_FRAME_IDXS = data.values()
     X = data["X"]
     y = data["y"]
+    X_aug = data["X_aug"]
     NON_EMPTY_FRAME_IDXS = data["NON_EMPTY_FRAME_IDXS"]
     data_config = data["config"]
 
@@ -116,6 +117,9 @@ def train_model(
                 )
             else:
                 validation_data = None
+            
+            if X_aug is not None:
+                logger.info(f"Data Augmentation has been set ... aug_prob = {train_config['AUG_PROB']}")
 
             history = model.fit(
                 x=get_train_batch_all_signs(
@@ -125,6 +129,8 @@ def train_model(
                     train_config["BATCH_ALL_SIGNS_N"],
                     data_config,
                     extra_features.N_COLS,
+                    X_aug=X_aug,
+                    aug_prob=train_config["AUG_PROB"],
                 ),
                 steps_per_epoch=len(X_train)
                 // (num_classes * train_config["BATCH_ALL_SIGNS_N"]),
@@ -141,7 +147,7 @@ def train_model(
                         mode=model_config["CB_MONITOR_MODE"],
                     ),
                     WandbModelCheckpoint(
-                        os.path.join(wandb.run.dir, f"{exp_id}-model-fold{fold_num}-best.h5"),
+                        f"{model_config['MODEL_DIR']}/{exp_id}-model-fold{fold_num}-best.h5",
                         monitor=model_config["CB_MONITOR"],
                         save_best_only=True,
                         save_weights_only=True,

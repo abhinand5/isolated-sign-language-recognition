@@ -6,6 +6,7 @@ from src.islr.data_processing.feature_extraction import get_all_feature_stats
 from src.islr.training.trainer import train_model
 from src.islr.training.cross_validation import get_fold_idx_map
 from src.islr.logging import get_logger
+from src.islr.utils import seed_it_all
 
 logger = get_logger(__name__)
 
@@ -15,6 +16,8 @@ def run_training(config_dict, dry_run=False):
     data_conf = config_dict["data"]
     train_conf = config_dict["train"]
     model_conf = config_dict["model"]
+
+    seed_it_all(general_conf['SEED'])
 
     os.environ['LABEL_SMOOTHING'] = str(model_conf['LABEL_SMOOTHING'])
 
@@ -40,6 +43,13 @@ def run_training(config_dict, dry_run=False):
     data["NON_EMPTY_FRAME_IDXS"] = np.load(
         os.path.join(general_conf["BASE_DATA_DIR"], "NON_EMPTY_FRAME_IDXS.npy")
     )
+
+    if train_conf['APPLY_AUGMENTATION']:
+        logger.info("Enabled Augmentation... Setting X_aug ...")
+        data["X_aug"] = np.load(os.path.join(general_conf["AUGMENT_DATA_DIR"], "X.npy"))
+    else:
+        data["X_aug"] = None
+
     data["config"] = data_conf
     logger.info("Successfully loaded Numpy data!")
 
