@@ -58,7 +58,7 @@ This sub-command preprocess and normalizes the raw data (also generated augmente
 ### train
 This sub-command trains a model based on the configurations provided in the train_config.yml file. The `--dry-run` flag can be used to stop just before the model.fit() method is called. The `--save-feature-stats` flag can be used to save feature statistics used for normalization and preprocessing in a pickle dump.
 
-**Usage:** python main.py train [--dry-run] [--save-feature-stats]
+**Usage:** `python main.py train [--dry-run] [--save-feature-stats]`
 
 **Arguments**:
 
@@ -86,7 +86,7 @@ This sub-command evaluates the performance of a trained model on the specified o
 ### tflite-convert
 This sub-command converts a trained Keras model to TensorFlow Lite format. The input model is specified using the `--input flag`. The converted model is saved in the specified `--dest-dir` or the default model directory specified in the config file. The `--quantize` flag can be used to quantize the model during conversion. The `--quantize-method` flag can be used to specify the quantization method, which can be either "dynamic" or "float16".
 
-Usage: python main.py tflite-convert --input <input_path> [--dest-dir <dest_dir>] [--quantize] [--quantize-method <method>]
+Usage: `python main.py tflite-convert --input <input_path> [--dest-dir <dest_dir>] [--quantize] [--quantize-method <method>]`
 
 **Arguments:**
 
