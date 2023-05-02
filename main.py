@@ -23,7 +23,7 @@ if __name__ == "__main__":
         "--save",
         dest="save_data",
         # type=bool,
-        action='store_true',
+        action="store_true",
         help="Setting this flag will save the data in the location set in config file",
         # required=False,
         # default=False,
@@ -34,8 +34,17 @@ if __name__ == "__main__":
         "--dry-run",
         dest="dry_run",
         # type=bool,
-        action='store_true',
+        action="store_true",
         help="Dry run exits just before model.fit()",
+        # required=False,
+        # default=False,
+    )
+    train_parser.add_argument(
+        "--save-feature-stats",
+        dest="save_feature_stats",
+        # type=bool,
+        action="store_true",
+        help="Saves the feature stats (used for normalization and preprocessing) in a pickle dump",
         # required=False,
         # default=False,
     )
@@ -102,9 +111,10 @@ if __name__ == "__main__":
     elif args.mode == "train":
         config_dict = load_config("./conf/train_config.yml")
         dry_run = args.dry_run
+        save_feature_stats = args.save_feature_stats
         if not dry_run:
             wandb.login(key=secrets["WANDB_API_KEY"])
-        run_training(config_dict, dry_run)
+        run_training(config_dict, dry_run, save_feature_stats)
 
     elif args.mode == "eval":
         wandb.init(mode="disabled")
@@ -115,11 +125,11 @@ if __name__ == "__main__":
 
         metrics = run_eval_on_oof(config_dict, fold_num, weights_path)
         logger.info(f"Evaluation Result:\n{metrics}")
-    
+
     elif args.mode == "distill":
         config_dict = load_config("./conf/train_config.yml")
         wandb.login(key=secrets["WANDB_API_KEY"])
-        
+
         run_distill_training(config_dict)
 
     elif args.mode == "tflite-convert":
@@ -132,7 +142,7 @@ if __name__ == "__main__":
         if dest_dir == None:
             dest_dir = config_dict["model"]["MODEL_DIR"]
 
-        name = os.path.basename(source_model).split('.')[0]
+        name = os.path.basename(source_model).split(".")[0]
 
         run_tflite_conversion(
             config_dict=config_dict,
