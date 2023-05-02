@@ -18,7 +18,7 @@ Install the dependencies
 
 `$ poetry install`
 
-### Using the CLI:
+## Using the CLI:
 
 This is the command-line interface (CLI) for the ISLR project. The CLI provides several sub-commands to perform different operations related to the project.
 
@@ -36,7 +36,7 @@ optional arguments:
   -h, --help            show this help message and exit
 ```
 
-#### Configuration files
+### Configuration files
 The CLI uses the following configuration files stores in the [conf folder](./conf/):
 
 `train_config.yml`: Contains the configurations for training the model.
@@ -45,7 +45,7 @@ The CLI uses the following configuration files stores in the [conf folder](./con
 
 `inference_config.yml`: Contains the configurations for performing inference on the trained model.
 
-#### datagen
+### datagen
 
 This sub-command preprocess and normalizes the raw data (also generated augmented variants to increase the dataset size) based on the configurations provided in the train_config.yml file. The generated data can be saved to the location specified in the config file using the `--save` flag. The resultant file is a `.npy` file.
 
@@ -55,7 +55,7 @@ This sub-command preprocess and normalizes the raw data (also generated augmente
 
 `--save`: Setting this flag will save the data in the location set in the config file.
 
-#### train
+### train
 This sub-command trains a model based on the configurations provided in the train_config.yml file. The `--dry-run` flag can be used to stop just before the model.fit() method is called. The `--save-feature-stats` flag can be used to save feature statistics used for normalization and preprocessing in a pickle dump.
 
 **Usage:** python main.py train [--dry-run] [--save-feature-stats]
@@ -66,13 +66,13 @@ This sub-command trains a model based on the configurations provided in the trai
 
 `--save-feature-stats`: Saves the feature stats (used for normalization and preprocessing) in a pickle dump.
 
-#### distill
+### distill
 
 This sub-command performs knowledge distillation training based on the configurations provided in the train_config.yml file.
 
 **Usage:** `python main.py distill`
 
-#### eval
+### eval
 
 This sub-command evaluates the performance of a trained model on the specified out-of-fold (OOF) fold using the weights of the model specified by the `--weights-path` flag.
 
@@ -82,8 +82,9 @@ This sub-command evaluates the performance of a trained model on the specified o
 
 --fold-num: The OOF fold on which to evaluate the model (required).
 --weights-path: The weights (*.h5) of the model to load and evaluate (required).
-tflite-convert
-This sub-command converts a trained Keras model to TensorFlow Lite format. The input model is specified using the --input flag. The converted model is saved in the specified --dest-dir or the default model directory specified in the config file. The --quantize flag can be used to quantize the model during conversion. The --quantize-method flag can be used to specify the quantization method, which can be either "dynamic" or "float16".
+
+### tflite-convert
+This sub-command converts a trained Keras model to TensorFlow Lite format. The input model is specified using the `--input flag`. The converted model is saved in the specified `--dest-dir` or the default model directory specified in the config file. The `--quantize` flag can be used to quantize the model during conversion. The `--quantize-method` flag can be used to specify the quantization method, which can be either "dynamic" or "float16".
 
 Usage: python main.py tflite-convert --input <input_path> [--dest-dir <dest_dir>] [--quantize] [--quantize-method <method>]
 
@@ -97,7 +98,7 @@ Usage: python main.py tflite-convert --input <input_path> [--dest-dir <dest_dir>
 
 `--quantize-method`: Quantization method, either "dynamic" (default) or "float16" (optional).
 
-#### inference
+### inference
 
 This sub-command performs inference on a trained model using the configurations provided in the inference_config.yml file.
 
